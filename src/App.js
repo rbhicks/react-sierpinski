@@ -5,24 +5,21 @@ class App extends Component {
     constructor (props) {
         super (props);
 
-        this.animationId    = null;
-        this.canvasRef      = null;
+        this.animationId        = null;
+        
+        this.ctx                = 0;
+        this.verticalOffset     = 0.2;
+        this.lowerLeftX         = 0;
+        this.lowerLeftY         = 0;
+        this.lowerRightX        = 0;
+        this.lowerRightY        = 0;
+        this.apexX              = 0;
+        this.apexY              = 0;
+
         this.createTriangle = this.createTriangle.bind(this);
     }
 
     createTriangle (canvas, currentX, currentY, currentVertexIndex) {
-
-        const boundingClientRect = canvas.getBoundingClientRect();
-        const ctx                = canvas.getContext('2d');
-        const verticalOffset     = 0.2;
-        const lowerLeftX         = boundingClientRect.width * 0.33;
-        const lowerLeftY         = boundingClientRect.height - (boundingClientRect.height * verticalOffset);
-        const lowerRightX        = boundingClientRect.width * 0.66;
-        const lowerRightY        = boundingClientRect.height - (boundingClientRect.height * verticalOffset);
-        const apexX              = lowerLeftX + ((lowerRightX - lowerLeftX) / 2);
-        const apexY              = (boundingClientRect.height -
-                                   ((Math.sqrt(3) / 2) * (lowerRightX - lowerLeftX))) -
-                                   (boundingClientRect.height * verticalOffset);
 
         const vertexCount   = 300000;
         const discardCount  = 1000;
@@ -34,23 +31,23 @@ class App extends Component {
             
             // lower left vertex
             if      (currentVertex === 0) {
-                currentX = (currentX + lowerLeftX) / 2;
-                currentY = (currentY + lowerLeftY) / 2;
+                currentX = (currentX + this.lowerLeftX) / 2;
+                currentY = (currentY + this.lowerLeftY) / 2;
             }
             // lower right vertex
             else if (currentVertex === 1) {
-                currentX = (currentX + lowerRightX) / 2;
-                currentY = (currentY + lowerRightY) / 2;
+                currentX = (currentX + this.lowerRightX) / 2;
+                currentY = (currentY + this.lowerRightY) / 2;
             }
             // apex
             else if (currentVertex === 2) {
-                currentX = (currentX + apexX) / 2;
-                currentY = (currentY + apexY) / 2;
+                currentX = (currentX + this.apexX) / 2;
+                currentY = (currentY + this.apexY) / 2;
             }
             
             if (currentVertexIndex > discardCount) {
-                ctx.fillStyle = 'blue';
-                ctx.fillRect(currentX, currentY, 0.01, 0.01);
+                this.ctx.fillStyle = 'blue';
+                this.ctx.fillRect(currentX, currentY, 0.01, 0.01);
             }
         }
 
@@ -68,14 +65,6 @@ class App extends Component {
             window.cancelAnimationFrame(this.animationId);
         }
     }
-
-    componentDidMount () {
-        if (this.canvasRef != null) {
-
-            this.animationId = window.requestAnimationFrame(timestamp => {
-                               this.createTriangle(this.canvasRef, 0, 0, 0);});
-        }
-    }
     
     render () {
 
@@ -84,7 +73,22 @@ class App extends Component {
 	       id="sierpinski"
 	       width={window.innerWidth}
 	       height={window.innerHeight}
-               ref={ canvas => this.canvasRef = canvas }
+               ref={ canvas => {
+                   const boundingClientRect = canvas.getBoundingClientRect();
+
+                   this.ctx         = canvas.getContext('2d');
+                   this.lowerLeftX  = boundingClientRect.width * 0.33;
+                   this.lowerLeftY  = boundingClientRect.height - (boundingClientRect.height * this.verticalOffset);
+                   this.lowerRightX = boundingClientRect.width * 0.66;
+                   this.lowerRightY = boundingClientRect.height - (boundingClientRect.height * this.verticalOffset);
+                   this.apexX       = this.lowerLeftX + ((this.lowerRightX - this.lowerLeftX) / 2);
+                   this.apexY       = (boundingClientRect.height -
+                                      ((Math.sqrt(3) / 2) * (this.lowerRightX - this.lowerLeftX))) -
+                                      (boundingClientRect.height * this.verticalOffset);
+                   
+                   this.animationId = window.requestAnimationFrame(timestamp => {
+                                      this.createTriangle(this.canvasRef, 0, 0, 0);});
+              }}
 	      >
 	      <h3>
 		Oh no! You do not have support for the html5 canvas API!
