@@ -8,22 +8,22 @@ class App extends Component {
         this.animationId        = null;
         
         this.ctx                = 0;
-        this.verticalOffset     = 0.2;
         this.lowerLeftX         = 0;
         this.lowerLeftY         = 0;
         this.lowerRightX        = 0;
         this.lowerRightY        = 0;
         this.apexX              = 0;
         this.apexY              = 0;
+        this.vertexCount        = 600000;
+        this.discardCount       = 1000;
+        this.width              = 0;
+        this.height             = 0;
 
         this.createTriangle = this.createTriangle.bind(this);
     }
 
     createTriangle (canvas, currentX, currentY, currentVertexIndex) {
-
-        const vertexCount   = 300000;
-        const discardCount  = 1000;
-        let   currentVertex = 0;
+        let currentVertex = 0;
         
         for (let i = 0; i < 250; ++i) {
             
@@ -45,14 +45,13 @@ class App extends Component {
                 currentY = (currentY + this.apexY) / 2;
             }
             
-            if (currentVertexIndex > discardCount) {
+            if (currentVertexIndex > this.discardCount) {
                 this.ctx.fillStyle = 'blue';
                 this.ctx.fillRect(currentX, currentY, 0.01, 0.01);
             }
         }
-
         
-        if (currentVertexIndex < vertexCount) {
+        if (currentVertexIndex < this.vertexCount) {
             window.requestAnimationFrame(timestamp => {
                 this.createTriangle(canvas, currentX, currentY, currentVertexIndex + 250);
             });
@@ -60,7 +59,7 @@ class App extends Component {
         else {
             console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
             console.log(currentVertexIndex);
-            console.log(vertexCount);
+            console.log(this.vertexCount);
             console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");            
             window.cancelAnimationFrame(this.animationId);
         }
@@ -75,16 +74,55 @@ class App extends Component {
 	       height={window.innerHeight}
                ref={ canvas => {
                    const boundingClientRect = canvas.getBoundingClientRect();
+                   let   verticalOffset     = 0;
+                   let   horizontalOffset   = 0;
+                   let   apexHeight         = 0;
 
-                   this.ctx         = canvas.getContext('2d');
-                   this.lowerLeftX  = boundingClientRect.width * 0.33;
-                   this.lowerLeftY  = boundingClientRect.height - (boundingClientRect.height * this.verticalOffset);
-                   this.lowerRightX = boundingClientRect.width * 0.66;
-                   this.lowerRightY = boundingClientRect.height - (boundingClientRect.height * this.verticalOffset);
-                   this.apexX       = this.lowerLeftX + ((this.lowerRightX - this.lowerLeftX) / 2);
-                   this.apexY       = (boundingClientRect.height -
-                                      ((Math.sqrt(3) / 2) * (this.lowerRightX - this.lowerLeftX))) -
-                                      (boundingClientRect.height * this.verticalOffset);
+                   this.width  = boundingClientRect.width;
+                   this.height = boundingClientRect.height;
+                   this.ctx    = canvas.getContext('2d');
+
+                   // landscape
+                   if (this.width > this.height) {                       
+                       horizontalOffset = (this.width - this.height) / 2;
+                       
+                       this.lowerLeftX  = horizontalOffset;
+                       this.lowerRightX = this.height + horizontalOffset;
+                       this.apexX       = this.lowerLeftX + ((this.lowerRightX - this.lowerLeftX) / 2);
+
+                       apexHeight       = ((Math.sqrt(3) / 2) * (this.lowerRightX - this.lowerLeftX));
+                       verticalOffset   = (this.height - apexHeight) / 2;
+                       
+                       this.lowerLeftY  = this.height - verticalOffset;
+                       this.lowerRightY = this.height - verticalOffset;
+                       this.apexY       = this.height - apexHeight - verticalOffset;
+                   }
+                   // portrait
+                   else if (this.width < this.height) {
+                       this.lowerLeftX  = this.width * 0.05;
+                       this.lowerRightX = this.width * 0.95;
+                       this.apexX       = this.lowerLeftX + ((this.lowerRightX - this.lowerLeftX) / 2);
+
+                       apexHeight       = ((Math.sqrt(3) / 2) * (this.lowerRightX - this.lowerLeftX));
+                       verticalOffset   = (this.height - apexHeight) / 2;
+                       
+                       this.lowerLeftY  = this.height - verticalOffset;
+                       this.lowerRightY = this.height - verticalOffset;
+                       this.apexY       = this.height - apexHeight - verticalOffset;
+                   }
+                   // in case we end up with a square
+                   else {
+                       this.lowerLeftX  = this.width * 0.05;
+                       this.lowerRightX = this.width * 0.95;
+                       this.apexX       = this.lowerLeftX + ((this.lowerRightX - this.lowerLeftX) / 2);
+
+                       apexHeight       = ((Math.sqrt(3) / 2) * (this.lowerRightX - this.lowerLeftX));
+                       verticalOffset   = this.height * 0.05
+                       
+                       this.lowerLeftY  = this.height - verticalOffset;
+                       this.lowerRightY = this.height - verticalOffset;
+                       this.apexY       = this.height - apexHeight - verticalOffset;
+                   }
                    
                    this.animationId = window.requestAnimationFrame(timestamp => {
                                       this.createTriangle(this.canvasRef, 0, 0, 0);});
